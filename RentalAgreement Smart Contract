@@ -1,0 +1,54 @@
+//SPDX-License-Identifier: MIT
+
+pragma solidity ^0.8.0;
+
+contract RentalAgreement{
+    address payable public landlord;
+    address public tenant;
+    uint256 public rentalAmount;
+    uint256 public secuirtyDeposit;
+    uint256 public leaseStartDate;
+    uint256 public leaseEndDate;
+    bool public contractActive;
+    bool public securityDepositPaid;
+
+    constructor(address payable _landlord,address _tenant,uint256 _rentalAmount,
+                            uint256 _securityDeposit,uint256 _leaseStartDate,uint256 _leaseEndDate){
+
+        landlord = _landlord;
+        tenant = _tenant;
+        rentalAmount = _rentalAmount;
+        secuirtyDeposit = _securityDeposit;
+        leaseStartDate = _leaseStartDate;
+        leaseEndDate = _leaseEndDate;
+        contractActive = true;                            
+
+    }
+    function payRent() public payable{
+        require(msg.sender == tenant,"Only tenant can pay rent");
+        require(contractActive,"Contract has ended");
+        require(msg.value == rentalAmount,"Invalid rent amount");
+        landlord.transfer(msg.value);
+    }
+    
+    function paySecurityDeposit() public payable{
+        require(msg.sender == tenant,"Only tenant can pay secuirty deposit");
+        require(contractActive,"Contract has ended");
+        require(msg.value == secuirtyDeposit,"Invalid security ammount");
+        securityDepositPaid = true;
+    }
+
+    function endContract() public payable{
+        require(msg.sender==landlord,"Only landlord can end the contract");
+        require(contractActive,"Contract has ended");
+        require(block.timestamp>=leaseEndDate,"Contract has not expired yet");
+        if(!securityDepositPaid){
+            payable(tenant).transfer(rentalAmount);
+        }
+        contractActive = false;
+    }
+
+    function getContractStatus() public view returns(bool){
+        return contractActive;
+    }
+}
